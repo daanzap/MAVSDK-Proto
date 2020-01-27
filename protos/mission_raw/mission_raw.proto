@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+package mavsdk.rpc.mission;
+
+option java_package = "io.mavsdk.mission";
+option java_outer_classname = "MissionProto";
+
+// Enable waypoint missions.
+service MissionService {
+ /*
+     * Download a list of mission items from the system (asynchronous).
+     *
+     * Will fail if any of the downloaded mission items are not supported
+     * by the MAVSDK API.
+     */
+    rpc DownloadMission(DownloadMissionRequest) returns(DownloadMissionResponse) {}
+    /*
+     * Cancel an ongoing mission download.
+     */
+    rpc CancelMissionDownload(CancelMissionDownloadRequest) returns(CancelMissionDownloadResponse) {}
+  
+}
+
+
+message CancelMissionUploadRequest {}
+message CancelMissionUploadResponse {}
+
+message DownloadMissionRequest {}
+message DownloadMissionResponse {
+    MissionResult mission_result = 1;
+    repeated MissionItem mission_items = 2; // List of downloaded mission items
+}
+
+message CancelMissionDownloadRequest {}
+message CancelMissionDownloadResponse {}
+
+/*
+ * Type representing a mission item.
+ *
+ * A MissionItem can contain a position and/or actions.
+ * Mission items are building blocks to assemble a mission,
+ * which can be sent to (or received from) a system.
+ * They cannot be used independently.
+ */
+message MissionItem {
+	int32 target_system = 1; /**< @brief System ID. */
+	int32 target_component = 2; /**< @brief Component ID. */
+	int32 seq = 3; /**< @brief Sequence. */
+	int32 frame = 4; /**< @brief The coordinate system of the waypoint. */
+	int32 command = 5; /**< @brief The scheduled action for the waypoint. */
+	int32 current = 6; /**< @brief false:0, true:1. */
+	int32 autocontinue = 7; /**< @brief Autocontinue to next waypoint. */
+	float param1 = 8; /**< @brief PARAM1, see MAV_CMD enum. */
+	float param2 = 9; /**< @brief PARAM2, see MAV_CMD enum. */
+	float param3 = 10; /**< @brief PARAM3, see MAV_CMD enum. */
+	float param4 = 11; /**< @brief PARAM4, see MAV_CMD enum. */
+	int32 x = 12; /**< @brief PARAM5 / local: x position in meters * 1e4, global: latitude in
+				  degrees * 10^7. */
+	int32 y = 13; /**< @brief PARAM6 / y position: local: x position in meters * 1e4, global:
+				  longitude in degrees *10^7. */
+	float z = 14; /**< @brief PARAM7 / local: Z coordinate, global: altitude (relative or absolute,
+                    depending on frame). */
+	int32 mission_type = 15; /**< @brief Mission type. */
+
+}
+
+
+// Result type.
+message MissionResult {
+    // Possible results returned for action requests.
+    enum Result {
+        UNKNOWN = 0; // Unknown error
+        SUCCESS = 1; // Request succeeded
+        ERROR = 2; // Error
+        BUSY = 3; // Vehicle is busy
+        TIMEOUT = 4; // Request timed out
+        INVALID_ARGUMENT = 5; // Invalid argument
+        NO_MISSION_AVAILABLE = 6; // No mission available on the system
+        TRANSFER_CANCELLED = 7; // Mission transfer (upload or download) has been cancelled
+    }
+
+    Result result = 1; // Result enum value
+    string result_str = 2; // Human-readable English string describing the result
+}
